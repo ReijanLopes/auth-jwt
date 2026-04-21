@@ -9,6 +9,7 @@ import {
   RegisterUseCase,
 } from "../../../domain/auth/usecase/registerUseCase";
 import { LoginUseCase } from "../../../domain/auth/usecase/loginUseCase";
+import { LogoutUseCase } from "../../../domain/auth/usecase/logoutUseCase";
 
 type LoginInput = {
   email: string;
@@ -60,8 +61,13 @@ export const authResolvers = {
     ) => {
       const { email, password } = input;
 
-      const usecase = new LoginUseCase(userRepo, authRepo, hashService, jwtService)
-      const tokenPair = await usecase.execute({ email, password })
+      const usecase = new LoginUseCase(
+        userRepo,
+        authRepo,
+        hashService,
+        jwtService,
+      );
+      const tokenPair = await usecase.execute({ email, password });
 
       setTokenCookie(
         ctx,
@@ -107,10 +113,21 @@ export const authResolvers = {
 
       return { accessToken: tokenPair.accessToken };
     },
-    refreshToken: async (_: unknown, __: unknown) => {
+    refreshToken: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
       return false;
     },
-    logout: async (_: unknown, __: unknown) => {
+    logout: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
+      const refreshToken = await ctx.request.cookieStore?.get("refreshToken");
+      if (!refreshToken?.value) {
+        throw new Error(
+          "Invalid or missing refresh token.",
+        );
+      }
+
+      const usecase = new LogoutUseCase(authRepo);
+      await usecase.execute(refreshToken?.value);
+
+      ctx.request.cookieStore?.delete("refreshToken");
       return false;
     },
   },
