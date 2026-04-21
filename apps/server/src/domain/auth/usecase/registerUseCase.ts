@@ -3,7 +3,7 @@ import { User } from "../../user/entities/user";
 import { JwtService, TokenPair } from "../services/jwtService";
 import { AuthRepository } from "../repositories/authRepository";
 import { RefreshToken } from "../entities/refreshToken";
-import { Role, UserRole } from "../../role/entities/role";
+import { UserRole } from "../../role/entities/role";
 import { HashService } from "../services/hashService";
 import { UserRepository } from "../../user/repositories/userRepository";
 import { RoleRepository } from "../../role/repositories/roleRepository";

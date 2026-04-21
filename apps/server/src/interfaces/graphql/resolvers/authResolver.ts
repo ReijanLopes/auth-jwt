@@ -8,6 +8,7 @@ import {
   RegisterInput,
   RegisterUseCase,
 } from "../../../domain/auth/usecase/registerUseCase";
+import { LoginUseCase } from "../../../domain/auth/usecase/loginUseCase";
 
 type LoginInput = {
   email: string;
@@ -57,7 +58,20 @@ export const authResolvers = {
       { input }: { input: LoginInput },
       ctx: YogaInitialContext,
     ) => {
-      return null;
+      const { email, password } = input;
+
+      const usecase = new LoginUseCase(userRepo, authRepo, hashService, jwtService)
+      const tokenPair = await usecase.execute({ email, password })
+
+      setTokenCookie(
+        ctx,
+        tokenPair.refreshToken,
+        "refreshToken",
+        isProd,
+        7 * 24 * 60 * 60 * 1000,
+      );
+
+      return { accessToken: tokenPair.accessToken };
     },
     register: async (
       _: unknown,
