@@ -5,9 +5,72 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String
+  taxId     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role Role @relation(fields: [roleId], references: [id])
+  medias    Media?
+  roleId    String
+
+  refreshTokens RefreshToken[]
+  @@map("users") // Dica: define o nome da tabela no banco como "users" (minúsculo)
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id        String    @id @default(uuid())
+  url       String
+  type      MediaType // Usa o Enum definido acima
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // RELAÇÃO: Se a mídia pertencer a um usuário (ex: foto de perfil)
+  // Caso queira que um usuário tenha várias mídias, a relação fica assim:
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    String?   @unique
+
+  @@map("medias")
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      String   @unique // MASTER, ADMIN, etc.
+  level     Int      // O peso (1 a 5) que você definiu no RoleWeight
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // RELAÇÃO INVERSA: Um role pode estar em vários usuários
+  users     User[]
+
+  @@map("roles")
+}
+

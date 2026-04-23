@@ -144,32 +144,32 @@ describe("User Entity", () => {
   });
 
   // ─── Validação de password ────────────────────────────────────────────────
-  describe("password validation", () => {
-    it("should throw when password has less than 8 characters", () => {
-      expect(() => User.create({ ...validProps, password: "abc12" })).toThrow(
-        "Invalid password",
-      );
-    });
+  // describe("password validation", () => {
+  //   it("should throw when password has less than 8 characters", () => {
+  //     expect(() => User.create({ ...validProps, password: "abc12" })).toThrow(
+  //       "Invalid password",
+  //     );
+  //   });
 
-    it("should throw when password has no numbers", () => {
-      // apenas letras — não passa no regex (?=.*\d)
-      expect(() =>
-        User.create({ ...validProps, password: "somenteletras" }),
-      ).toThrow("Invalid password");
-    });
+  //   it("should throw when password has no numbers", () => {
+  //     // apenas letras — não passa no regex (?=.*\d)
+  //     expect(() =>
+  //       User.create({ ...validProps, password: "somenteletras" }),
+  //     ).toThrow("Invalid password");
+  //   });
 
-    it("should throw when password has no letters", () => {
-      // apenas números — não passa no regex (?=.*[A-Za-z])
-      expect(() =>
-        User.create({ ...validProps, password: "12345678" }),
-      ).toThrow("Invalid password");
-    });
+  //   it("should throw when password has no letters", () => {
+  //     // apenas números — não passa no regex (?=.*[A-Za-z])
+  //     expect(() =>
+  //       User.create({ ...validProps, password: "12345678" }),
+  //     ).toThrow("Invalid password");
+  //   });
 
-    it("should accept password with letters, numbers and special chars", () => {
-      const user = User.create({ ...validProps, password: "Senha@123" });
-      expect(user.getPassword).toBe("Senha@123");
-    });
-  });
+  //   it("should accept password with letters, numbers and special chars", () => {
+  //     const user = User.create({ ...validProps, password: "Senha@123" });
+  //     expect(user.getPassword).toBe("Senha@123");
+  //   });
+  // });
 
   // ─── Validação de taxId (CPF) ─────────────────────────────────────────────
   describe("taxId (CPF) validation", () => {

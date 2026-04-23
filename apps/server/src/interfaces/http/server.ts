@@ -13,7 +13,7 @@ export function createServer() {
     graphqlEndpoint: "/graphql",
     plugins: [useCookies()],
     context: ({ request }) => {
-      return {};
+      return {request};
     },
   });
 

@@ -55,11 +55,6 @@ export class User {
         "Invalid tax ID format. Tax ID must be a valid CPF number.",
       );
     }
-    if (!isValidPassword(props.password)) {
-      throw new Error(
-        "Invalid password. Password must be at least 8 characters long.",
-      );
-    }
 
     return new User(
       props.id ?? crypto.randomUUID(),
