@@ -2,7 +2,7 @@ import { LogoutUseCase } from "../usecase/logoutUseCase";
 import { AuthRepository } from "../repositories/authRepository";
 
 import { describe, expect, it, jest } from "@jest/globals";
-import { beforeEach } from "node:test";
+import { beforeEach } from "@jest/globals";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -14,12 +14,20 @@ const mockAuthRepo = {
 
 const makeSut = () => new LogoutUseCase(mockAuthRepo);
 
-const makeCookieStore = (tokenValue?: string) => ({
-  get: jest.fn().mockResolvedValue(
+type Cookie = { value: string } | null;
+
+const makeCookieStore = (tokenValue?: string) => {
+  const getMock = jest.fn<(name: string) => Promise<Cookie>>();
+
+  getMock.mockResolvedValue(
     tokenValue !== undefined ? { value: tokenValue } : null,
-  ),
-  delete: jest.fn(),
-});
+  );
+
+  return {
+    get: getMock,
+    delete: jest.fn(),
+  };
+};
 
 const makeCtx = (tokenValue?: string) => ({
   request: {

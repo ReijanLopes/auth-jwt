@@ -1,18 +1,24 @@
 import bcrypt from "bcrypt";
+import { createHash } from "crypto";
 
 export interface HashService {
-  hash(plain: string): Promise<string>;
-  compare(plain: string, hashed: string): Promise<boolean>;
+  hashBcrypt(plain: string): Promise<string>;
+  hashSha256(plain: string): string;
+  compareBcrypt(plain: string, hashed: string): Promise<boolean>;
 }
 
 export class BcryptHashService implements HashService {
   private readonly SALT_ROUNDS = 12;
 
-  async hash(plain: string): Promise<string> {
+  async hashBcrypt(plain: string): Promise<string> {
     return bcrypt.hash(plain, this.SALT_ROUNDS);
   }
 
-  async compare(plain: string, hashed: string): Promise<boolean> {
+  hashSha256(plain: string): string {
+    return createHash("sha256").update(plain).digest("hex");
+  }
+
+  async compareBcrypt(plain: string, hashed: string): Promise<boolean> {
     return bcrypt.compare(plain, hashed);
   }
 }

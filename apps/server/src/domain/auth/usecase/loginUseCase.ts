@@ -27,7 +27,7 @@ export class LoginUseCase {
       throw new Error("User account is deactivated.");
     }
 
-    const passwordMatch = await this.hashService.compare(
+    const passwordMatch = await this.hashService.compareBcrypt(
       input.password,
       user.getPassword,  // adicione getter na entidade (ver nota abaixo)
     );
@@ -39,10 +39,11 @@ export class LoginUseCase {
       sub: user.getId,
       role: user.getRole.getName,
     });
+    const hashedRefreshToken = this.hashService.hashSha256(tokens.refreshToken);
 
     const refreshToken = RefreshToken.create({
       userId: user.getId,
-      token: tokens.refreshToken,
+      token: hashedRefreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
     });
 

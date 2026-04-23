@@ -41,7 +41,7 @@ export class RegisterUseCase {
         this.userRepo.findByEmail(input.email),
         this.userRepo.findByTaxId(input.taxId),
         this.roleRepo.findByName(roleName),
-        this.hashService.hash(input.password),
+        this.hashService.hashBcrypt(input.password),
       ]);
 
     if (emailExisting) throw new Error("Email already in use.");
@@ -64,10 +64,8 @@ export class RegisterUseCase {
     });
 
     // Paraleliza save do user + hash do refreshToken
-    const [, hashedRefreshToken] = await Promise.all([
-      this.userRepo.save(user),
-      this.hashService.hash(tokens.refreshToken),
-    ]);
+    await this.userRepo.save(user)
+    const hashedRefreshToken = this.hashService.hashSha256(tokens.refreshToken);
 
     const refreshToken = RefreshToken.create({
       userId: user.getId,

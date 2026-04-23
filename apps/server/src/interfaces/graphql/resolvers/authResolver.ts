@@ -4,53 +4,23 @@ import { JwtService } from "../../../domain/auth/services/jwtService";
 import { PrismaAuthRepository } from "../../../infrastructure/database/prisma/repositories/prismaAuthRepository";
 import { PrismaRoleRepository } from "../../../infrastructure/database/prisma/repositories/prismaRoleRepository";
 import { PrismaUserRepository } from "../../../infrastructure/database/prisma/repositories/prismaUserRepository";
-import {
-  RegisterInput,
-  RegisterUseCase,
-} from "../../../domain/auth/usecase/registerUseCase";
+import { RegisterInput, RegisterUseCase } from "../../../domain/auth/usecase/registerUseCase";
 import { LoginUseCase } from "../../../domain/auth/usecase/loginUseCase";
 import { LogoutUseCase } from "../../../domain/auth/usecase/logoutUseCase";
+import { RefreshTokenUseCase } from "../../../domain/auth/usecase/refreshTokenUseCase";
+import { CookieService } from "../../../infrastructure/http/services/cookieService";
 
 type LoginInput = {
   email: string;
   password: string;
 };
 
-// type RegisterInput = {
-//   name: string;
-//   email: string;
-//   phone: string;
-//   password: string;
-//   taxId: string;
-//   role: string;
-// };
-
-const isProd = process.env.NODE_ENV === "production";
-
 const userRepo = new PrismaUserRepository();
 const authRepo = new PrismaAuthRepository();
 const roleRepo = new PrismaRoleRepository();
 const hashService = new BcryptHashService();
 const jwtService = new JwtService();
-
-function setTokenCookie(
-  ctx: YogaInitialContext,
-  token: string,
-  name: string,
-  isProd: boolean,
-  expiresIn: number,
-) {
-  ctx.request.cookieStore?.set({
-    name: name,
-    value: token,
-    domain: isProd ? "nuna.com" : "localhost",
-    path: "/",
-    expires: new Date(Date.now() + expiresIn),
-    secure: isProd,
-    sameSite: "lax",
-    httpOnly: true,
-  });
-}
+const cookieService = new CookieService();
 
 export const authResolvers = {
   Mutation: {
@@ -69,11 +39,10 @@ export const authResolvers = {
       );
       const tokenPair = await usecase.execute({ email, password });
 
-      setTokenCookie(
+      cookieService.setToken(
         ctx,
         tokenPair.refreshToken,
         "refreshToken",
-        isProd,
         7 * 24 * 60 * 60 * 1000,
       );
 
@@ -103,18 +72,33 @@ export const authResolvers = {
         role,
       });
 
-      setTokenCookie(
+      cookieService.setToken(
         ctx,
         tokenPair.refreshToken,
         "refreshToken",
-        isProd,
         7 * 24 * 60 * 60 * 1000,
-      ); // 7 dias
+      );
 
       return { accessToken: tokenPair.accessToken };
     },
     refreshToken: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
-      return false;
+      const refreshToken = await cookieService.getToken(ctx, "refreshToken");
+      console.log("Refresh token from cookie:", refreshToken);
+      if (!refreshToken) {
+        throw new Error("Invalid or missing refresh token.");
+      }
+
+      const usecase = new RefreshTokenUseCase(authRepo, jwtService, hashService);
+      const tokenPair = await usecase.execute(refreshToken);
+
+      cookieService.setToken(
+        ctx,
+        tokenPair.refreshToken,
+        "refreshToken",
+        7 * 24 * 60 * 60 * 1000,
+      );
+      
+      return { accessToken: tokenPair.accessToken };
     },
     logout: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
       const refreshToken = await ctx.request.cookieStore?.get("refreshToken");
@@ -127,7 +111,7 @@ export const authResolvers = {
       const usecase = new LogoutUseCase(authRepo);
       await usecase.execute(refreshToken?.value);
 
-      ctx.request.cookieStore?.delete("refreshToken");
+      cookieService.deleteToken(ctx, "refreshToken");
       return false;
     },
   },
