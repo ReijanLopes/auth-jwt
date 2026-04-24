@@ -114,5 +114,9 @@ export const authResolvers = {
       cookieService.deleteToken(ctx, "refreshToken");
       return false;
     },
+    getMe: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
+      // const userId = ctx.userId;
+      return null;
+    }
   },
 };
