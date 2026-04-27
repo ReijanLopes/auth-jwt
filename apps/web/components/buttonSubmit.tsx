@@ -22,7 +22,7 @@ export function SubmitButton({
       {...props}
       type="submit"
       className={`${className} bg-linear-to-r from-[#120D94] to-[#1E13EE] text-white font-bold ${
-        isPending && "!flex !items-center !justify-center cursor-progress "
+        isPending && "flex! items-center! justify-center! cursor-progress "
       }`}
       aria-disabled={pending}
       disabled={isPending}

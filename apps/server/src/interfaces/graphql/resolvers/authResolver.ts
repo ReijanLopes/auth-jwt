@@ -83,7 +83,7 @@ export const authResolvers = {
     },
     refreshToken: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
       const refreshToken = await cookieService.getToken(ctx, "refreshToken");
-      console.log("Refresh token from cookie:", refreshToken);
+
       if (!refreshToken) {
         throw new Error("Invalid or missing refresh token.");
       }
@@ -101,21 +101,21 @@ export const authResolvers = {
       return { accessToken: tokenPair.accessToken };
     },
     logout: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
-      const refreshToken = await ctx.request.cookieStore?.get("refreshToken");
-      if (!refreshToken?.value) {
+      const refreshToken = await cookieService.getToken(ctx, "refreshToken");
+      if (!refreshToken) {
         throw new Error(
           "Invalid or missing refresh token.",
         );
       }
 
       const usecase = new LogoutUseCase(authRepo);
-      await usecase.execute(refreshToken?.value);
+      await usecase.execute(refreshToken);
 
       cookieService.deleteToken(ctx, "refreshToken");
       return false;
     },
     getMe: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
-      // const userId = ctx.userId;
+      const refreshToken = await cookieService.getToken(ctx, "refreshToken");
       return null;
     }
   },
