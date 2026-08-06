@@ -1,4 +1,3 @@
-import { YogaInitialContext } from "graphql-yoga";
 import { BcryptHashService } from "../../../domain/auth/services/hashService";
 import { JwtService } from "../../../domain/auth/services/jwtService";
 import { PrismaAuthRepository } from "../../../infrastructure/database/prisma/repositories/prismaAuthRepository";
@@ -9,6 +8,8 @@ import { LoginUseCase } from "../../../domain/auth/usecase/loginUseCase";
 import { LogoutUseCase } from "../../../domain/auth/usecase/logoutUseCase";
 import { RefreshTokenUseCase } from "../../../domain/auth/usecase/refreshTokenUseCase";
 import { CookieService } from "../../../infrastructure/http/services/cookieService";
+import { RateLimiter } from "../../../infrastructure/http/rateLimiter";
+import { GraphQLContext, getClientIp } from "../context";
 
 type LoginInput = {
   email: string;
@@ -22,14 +23,21 @@ const hashService = new BcryptHashService();
 const jwtService = new JwtService();
 const cookieService = new CookieService();
 
+// 5 tentativas de login por IP a cada 15 minutos
+const loginRateLimiter = new RateLimiter(5, 15 * 60 * 1000);
+// 5 cadastros por IP a cada 1 hora
+const registerRateLimiter = new RateLimiter(5, 60 * 60 * 1000);
+
 export const authResolvers = {
   Mutation: {
     login: async (
       _: unknown,
       { input }: { input: LoginInput },
-      ctx: YogaInitialContext,
+      ctx: GraphQLContext,
     ) => {
       const { email, password } = input;
+
+      loginRateLimiter.consume(getClientIp(ctx));
 
       const usecase = new LoginUseCase(
         userRepo,
@@ -51,9 +59,11 @@ export const authResolvers = {
     register: async (
       _: unknown,
       { input }: { input: RegisterInput },
-      ctx: YogaInitialContext,
+      ctx: GraphQLContext,
     ) => {
       const { name, email, phone, password, taxId, role } = input;
+
+      registerRateLimiter.consume(getClientIp(ctx));
 
       const usecase = new RegisterUseCase(
         userRepo,
@@ -81,9 +91,8 @@ export const authResolvers = {
 
       return { accessToken: tokenPair.accessToken };
     },
-    refreshToken: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
+    refreshToken: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
       const refreshToken = await cookieService.getToken(ctx, "refreshToken");
-      console.log("Refresh token from cookie:", refreshToken);
       if (!refreshToken) {
         throw new Error("Invalid or missing refresh token.");
       }
@@ -100,7 +109,7 @@ export const authResolvers = {
       
       return { accessToken: tokenPair.accessToken };
     },
-    logout: async (_: unknown, __: unknown, ctx: YogaInitialContext) => {
+    logout: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
       const refreshToken = await ctx.request.cookieStore?.get("refreshToken");
       if (!refreshToken?.value) {
         throw new Error(
@@ -108,11 +117,11 @@ export const authResolvers = {
         );
       }
 
-      const usecase = new LogoutUseCase(authRepo);
-      await usecase.execute(refreshToken?.value);
+      const usecase = new LogoutUseCase(authRepo, hashService);
+      await usecase.execute(refreshToken.value);
 
       cookieService.deleteToken(ctx, "refreshToken");
-      return false;
+      return true;
     },
   },
 };

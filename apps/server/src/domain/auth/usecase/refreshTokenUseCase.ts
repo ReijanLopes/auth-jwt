@@ -14,8 +14,6 @@ export class RefreshTokenUseCase {
     const tokenHash = this.hashService.hashSha256(token);
     const stored = await this.authRepo.findRefreshToken(tokenHash);
 
-    console.log("Stored token:", stored);
-    console.log("Is expired?", tokenHash, stored?.isExpired());
     if (!stored || stored.isExpired()) {
       throw new Error("Invalid or expired refresh token.");
     }

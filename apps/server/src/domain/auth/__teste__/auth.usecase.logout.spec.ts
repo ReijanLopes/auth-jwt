@@ -1,5 +1,6 @@
 import { LogoutUseCase } from "../usecase/logoutUseCase";
 import { AuthRepository } from "../repositories/authRepository";
+import { HashService } from "../services/hashService";
 
 import { describe, expect, it, jest } from "@jest/globals";
 import { beforeEach } from "@jest/globals";
@@ -10,9 +11,15 @@ const mockAuthRepo = {
   revokeRefreshToken: jest.fn(),
 } as unknown as jest.Mocked<AuthRepository>;
 
+const hashSha256 = (plain: string) => `hashed:${plain}`;
+
+const mockHashService = {
+  hashSha256: jest.fn(hashSha256),
+} as unknown as jest.Mocked<HashService>;
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const makeSut = () => new LogoutUseCase(mockAuthRepo);
+const makeSut = () => new LogoutUseCase(mockAuthRepo, mockHashService);
 
 type Cookie = { value: string } | null;
 
@@ -43,11 +50,11 @@ const logoutResolver = async (ctx: ReturnType<typeof makeCtx>) => {
     throw new Error("Invalid or missing refresh token.");
   }
 
-  const usecase = new LogoutUseCase(mockAuthRepo);
+  const usecase = new LogoutUseCase(mockAuthRepo, mockHashService);
   await usecase.execute(refreshToken?.value);
 
   ctx.request.cookieStore?.delete("refreshToken");
-  return false;
+  return true;
 };
 
 // ── Tests: LogoutUseCase ──────────────────────────────────────────────────────
@@ -55,15 +62,19 @@ const logoutResolver = async (ctx: ReturnType<typeof makeCtx>) => {
 describe("LogoutUseCase", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHashService.hashSha256.mockImplementation(hashSha256);
   });
 
-  it("should call revokeRefreshToken with the provided token", async () => {
+  it("should hash the token and call revokeRefreshToken with the hash", async () => {
     mockAuthRepo.revokeRefreshToken.mockResolvedValue(undefined);
 
     const sut = makeSut();
     await sut.execute("valid_refresh_token");
 
-    expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledWith("valid_refresh_token");
+    expect(mockHashService.hashSha256).toHaveBeenCalledWith("valid_refresh_token");
+    expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledWith(
+      "hashed:valid_refresh_token",
+    );
     expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledTimes(1);
   });
 
@@ -89,25 +100,28 @@ describe("LogoutUseCase", () => {
 describe("logout resolver", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHashService.hashSha256.mockImplementation(hashSha256);
   });
 
   describe("when refresh token cookie is present", () => {
-    it("should return false on successful logout", async () => {
+    it("should return true on successful logout", async () => {
       mockAuthRepo.revokeRefreshToken.mockResolvedValue(undefined);
       const ctx = makeCtx("valid_refresh_token");
 
       const result = await logoutResolver(ctx);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
-    it("should revoke the token from the cookie", async () => {
+    it("should revoke the hashed token from the cookie", async () => {
       mockAuthRepo.revokeRefreshToken.mockResolvedValue(undefined);
       const ctx = makeCtx("valid_refresh_token");
 
       await logoutResolver(ctx);
 
-      expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledWith("valid_refresh_token");
+      expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledWith(
+        "hashed:valid_refresh_token",
+      );
     });
 
     it("should delete the refreshToken cookie after revoking", async () => {
@@ -119,13 +133,15 @@ describe("logout resolver", () => {
       expect(ctx.request.cookieStore.delete).toHaveBeenCalledWith("refreshToken");
     });
 
-    it("should delete the cookie even if a different token value is used", async () => {
+    it("should hash and revoke even if a different token value is used", async () => {
       mockAuthRepo.revokeRefreshToken.mockResolvedValue(undefined);
       const ctx = makeCtx("another_token_abc");
 
       await logoutResolver(ctx);
 
-      expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledWith("another_token_abc");
+      expect(mockAuthRepo.revokeRefreshToken).toHaveBeenCalledWith(
+        "hashed:another_token_abc",
+      );
       expect(ctx.request.cookieStore.delete).toHaveBeenCalledWith("refreshToken");
     });
   });
