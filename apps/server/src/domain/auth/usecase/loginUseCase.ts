@@ -29,7 +29,7 @@ export class LoginUseCase {
 
     const passwordMatch = await this.hashService.compareBcrypt(
       input.password,
-      user.getPassword,  // adicione getter na entidade (ver nota abaixo)
+      user.getPassword,
     );
     if (!passwordMatch) {
       throw new Error("Invalid credentials.");

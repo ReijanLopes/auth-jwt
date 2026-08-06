@@ -63,7 +63,6 @@ export class RegisterUseCase {
       role: user.getRole.getName,
     });
 
-    // Paraleliza save do user + hash do refreshToken
     await this.userRepo.save(user)
     const hashedRefreshToken = this.hashService.hashSha256(tokens.refreshToken);
 
