@@ -1,10 +1,5 @@
-type Bucket = {
-  count: number;
-  resetAt: number;
-};
-
 export class RateLimiter {
-  private readonly hits = new Map<string, Bucket>();
+  private readonly hits = new Map<string, number[]>();
 
   constructor(
     private readonly max: number,
@@ -13,17 +8,18 @@ export class RateLimiter {
 
   consume(key: string): void {
     const now = Date.now();
-    const bucket = this.hits.get(key);
+    const windowStart = now - this.windowMs;
 
-    if (!bucket || now > bucket.resetAt) {
-      this.hits.set(key, { count: 1, resetAt: now + this.windowMs });
-      return;
+    const queue = this.hits.get(key) ?? [];
+    while (queue.length > 0 && queue[0] <= windowStart) {
+      queue.shift();
     }
 
-    if (bucket.count >= this.max) {
+    if (queue.length >= this.max) {
       throw new Error("Too many attempts. Please try again later.");
     }
 
-    bucket.count += 1;
+    queue.push(now);
+    this.hits.set(key, queue);
   }
 }
