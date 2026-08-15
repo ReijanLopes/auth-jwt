@@ -52,6 +52,8 @@ export class PrismaUserRepository implements UserRepository {
         password: user.getPassword,
         isActive: user.getIsActive,
         roleId: user.getRole.getId,
+        companyId: user.getCompanyId,
+        departmentId: user.getDepartmentId,
 
         medias: user.getMedia
           ? {
@@ -67,6 +69,8 @@ export class PrismaUserRepository implements UserRepository {
         password: user.getPassword,
         isActive: user.getIsActive,
         roleId: user.getRole.getId,
+        companyId: user.getCompanyId,
+        departmentId: user.getDepartmentId,
 
         medias: user.getMedia
           ? {
@@ -92,6 +96,8 @@ export class PrismaUserRepository implements UserRepository {
       password: record.password,
       isActive: record.isActive,
       role: record.role,
+      companyId: record.companyId,
+      departmentId: record.departmentId,
       media: record.media ?? undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,

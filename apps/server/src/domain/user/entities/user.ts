@@ -15,6 +15,8 @@ export type UserInput = {
   password: string;
   taxId: string;
   role: Role;
+  companyId: string;
+  departmentId: string;
   media?: Media;
   isActive?: boolean;
   updatedAt?: Date;
@@ -30,6 +32,8 @@ export class User {
     private taxId: string,
     private role: Role,
     private password: string,
+    private companyId: string,
+    private departmentId: string,
     private media: Media | null = null,
     private isActive: boolean,
     private createdAt: Date,
@@ -55,6 +59,12 @@ export class User {
         "Invalid tax ID format. Tax ID must be a valid CPF number.",
       );
     }
+    if (!props.companyId || !props.companyId.trim()) {
+      throw new Error("Invalid company ID. User must belong to a company.");
+    }
+    if (!props.departmentId || !props.departmentId.trim()) {
+      throw new Error("Invalid department ID. User must belong to a department.");
+    }
 
     return new User(
       props.id ?? crypto.randomUUID(),
@@ -64,6 +74,8 @@ export class User {
       props.taxId,
       props.role ?? UserRole.EMPLOYEE, // ?? em vez de ||
       props.password,
+      props.companyId,
+      props.departmentId,
       props.media ?? null,
       props.isActive ?? true, // ?? garante false como valor válido
       props.createdAt ?? new Date(), // nunca undefined
@@ -88,6 +100,12 @@ export class User {
   }
   get getRole() {
     return this.role;
+  }
+  get getCompanyId() {
+    return this.companyId;
+  }
+  get getDepartmentId() {
+    return this.departmentId;
   }
   get getIsActive() {
     return this.isActive;
