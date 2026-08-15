@@ -370,10 +370,6 @@ export type EnumMediaTypeFieldUpdateOperationsInput = {
   set?: $Enums.MediaType
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type MediaCreateWithoutUserInput = {
   id?: string
   url: string

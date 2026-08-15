@@ -15,6 +15,8 @@ export type RegisterInput = {
   phone: string;
   password: string;
   taxId: string;
+  companyId: string;
+  departmentId: string;
   role?: UserRole;
 };
 
@@ -56,6 +58,8 @@ export class RegisterUseCase {
       taxId: input.taxId,
       password: hashedPassword,
       role,
+      companyId: input.companyId,
+      departmentId: input.departmentId,
     });
 
     const tokens = this.jwtService.generateTokenPair({

@@ -37,8 +37,67 @@ model User {
   medias    Media?
   roleId    String
 
+  company      Company    @relation(fields: [companyId], references: [id])
+  companyId    String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+
   refreshTokens RefreshToken[]
   @@map("users") // Dica: define o nome da tabela no banco como "users" (minúsculo)
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  taxId     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // null => sede (franqueadora); caso contrário, id da sede.
+  parent      Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
+  parentId    String?
+  franchises  Company[] @relation("CompanyHierarchy")
+
+  departments Department[]
+  users       User[]
+
+  @@map("companies")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String
+
+  // null => raiz da árvore de departamentos da empresa.
+  parent   Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  parentId String?
+  children Department[] @relation("DepartmentHierarchy")
+
+  stocks Stock[]
+  users  User[]
+
+  @@map("departments")
+}
+
+model Stock {
+  id        String   @id @default(uuid())
+  name      String
+  quantity  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+
+  @@map("stocks")
 }
 
 enum MediaType {

@@ -28,6 +28,21 @@ export type RefreshToken = Prisma.RefreshTokenModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model Company
+ * 
+ */
+export type Company = Prisma.CompanyModel
+/**
+ * Model Department
+ * 
+ */
+export type Department = Prisma.DepartmentModel
+/**
+ * Model Stock
+ * 
+ */
+export type Stock = Prisma.StockModel
+/**
  * Model Media
  * 
  */

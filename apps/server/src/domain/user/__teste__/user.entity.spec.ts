@@ -20,6 +20,8 @@ const validProps = {
   password: "senha123", // ✅ letra + número + mínimo 8 chars
   taxId: "529.982.247-25", // ✅ CPF matematicamente válido
   role: new EmployeeRole(),
+  companyId: "11111111-1111-1111-1111-111111111111",
+  departmentId: "22222222-2222-2222-2222-222222222222",
 };
 
 describe("User Entity", () => {
@@ -33,6 +35,8 @@ describe("User Entity", () => {
       expect(user.getTaxId).toBe("529.982.247-25");
       expect(user.getIsActive).toBe(true);
       expect(user.getMedia).toBeNull();
+      expect(user.getCompanyId).toBe(validProps.companyId);
+      expect(user.getDepartmentId).toBe(validProps.departmentId);
     });
 
     it("should generate a UUID when id is not provided", () => {
@@ -62,6 +66,21 @@ describe("User Entity", () => {
       const { role, ...propsWithoutRole } = validProps;
       const user = User.create({ ...propsWithoutRole, role: undefined as any });
       expect(user.getRole).toBe(UserRole.EMPLOYEE);
+    });
+  });
+
+  // ─── Validação de companyId / departmentId ───────────────────────────────
+  describe("company/department validation", () => {
+    it("should throw when companyId is missing", () => {
+      expect(() =>
+        User.create({ ...validProps, companyId: "" }),
+      ).toThrow("Invalid company ID");
+    });
+
+    it("should throw when departmentId is missing", () => {
+      expect(() =>
+        User.create({ ...validProps, departmentId: "" }),
+      ).toThrow("Invalid department ID");
     });
   });
 

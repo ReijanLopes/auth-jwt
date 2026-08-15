@@ -10,6 +10,9 @@
  */
 export type * from './models/RefreshToken.ts'
 export type * from './models/User.ts'
+export type * from './models/Company.ts'
+export type * from './models/Department.ts'
+export type * from './models/Stock.ts'
 export type * from './models/Media.ts'
 export type * from './models/Role.ts'
 export type * from './commonInputTypes.ts'
