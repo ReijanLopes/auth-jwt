@@ -117,6 +117,6 @@ describe("departmentScope", () => {
       { id: "b", companyId: "hq", parentId: "a" },
     ];
     const manager = ctx(UserRole.MANAGER, hq, "root-not-in-cycle");
-    expect(departmentScope(manager, "a", cyclic, "department")).toBe(false);
+    expect(departmentScope(manager, "a", cyclic, "department")).toBe(false)
   });
 });
