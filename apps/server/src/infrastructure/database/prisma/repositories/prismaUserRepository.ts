@@ -86,6 +86,13 @@ export class PrismaUserRepository implements UserRepository {
     return this.toEntity(record);
   }
 
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+  }
+
   private toEntity(record: any): User {
     return User.create({
       id: record.id,

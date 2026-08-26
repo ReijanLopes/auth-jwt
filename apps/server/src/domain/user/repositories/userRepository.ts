@@ -6,4 +6,5 @@ export interface UserRepository {
   findById(id: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findByTaxId(taxId: string): Promise<User | null>;
+  updatePassword(userId: string, hashedPassword: string): Promise<void>;
 }

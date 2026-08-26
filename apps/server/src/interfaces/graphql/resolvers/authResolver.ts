@@ -7,7 +7,10 @@ import { RegisterInput, RegisterUseCase } from "../../../domain/auth/usecase/reg
 import { LoginUseCase } from "../../../domain/auth/usecase/loginUseCase";
 import { LogoutUseCase } from "../../../domain/auth/usecase/logoutUseCase";
 import { RefreshTokenUseCase } from "../../../domain/auth/usecase/refreshTokenUseCase";
+import { RequestPasswordResetUseCase } from "../../../domain/auth/usecase/requestPasswordResetUseCase";
+import { ResetPasswordUseCase } from "../../../domain/auth/usecase/resetPasswordUseCase";
 import { CookieService } from "../../../infrastructure/http/services/cookieService";
+import { ConsoleMailerService } from "../../../infrastructure/mail/consoleMailerService";
 import { RateLimiter } from "../../../infrastructure/http/rateLimiter";
 import { GraphQLContext, getClientIp } from "../context";
 
@@ -16,17 +19,25 @@ type LoginInput = {
   password: string;
 };
 
+type ResetPasswordInput = {
+  token: string;
+  newPassword: string;
+};
+
 const userRepo = new PrismaUserRepository();
 const authRepo = new PrismaAuthRepository();
 const roleRepo = new PrismaRoleRepository();
 const hashService = new BcryptHashService();
 const jwtService = new JwtService();
 const cookieService = new CookieService();
+const mailerService = new ConsoleMailerService();
 
 // 5 tentativas de login por IP a cada 15 minutos
 const loginRateLimiter = new RateLimiter(5, 15 * 60 * 1000);
 // 5 cadastros por IP a cada 1 hora
 const registerRateLimiter = new RateLimiter(5, 60 * 60 * 1000);
+// 3 pedidos de reset de senha por IP a cada 15 minutos
+const passwordResetRateLimiter = new RateLimiter(3, 15 * 60 * 1000);
 
 export const authResolvers = {
   Mutation: {
@@ -121,6 +132,35 @@ export const authResolvers = {
       await usecase.execute(refreshToken.value);
 
       cookieService.deleteToken(ctx, "refreshToken");
+      return true;
+    },
+    requestPasswordReset: async (
+      _: unknown,
+      { email }: { email: string },
+      ctx: GraphQLContext,
+    ) => {
+      passwordResetRateLimiter.consume(getClientIp(ctx));
+
+      const usecase = new RequestPasswordResetUseCase(
+        userRepo,
+        authRepo,
+        hashService,
+        mailerService,
+      );
+      await usecase.execute({ email });
+
+      return true;
+    },
+    resetPassword: async (
+      _: unknown,
+      { input }: { input: ResetPasswordInput },
+      ctx: GraphQLContext,
+    ) => {
+      passwordResetRateLimiter.consume(getClientIp(ctx));
+
+      const usecase = new ResetPasswordUseCase(userRepo, authRepo, hashService);
+      await usecase.execute(input);
+
       return true;
     },
   },
