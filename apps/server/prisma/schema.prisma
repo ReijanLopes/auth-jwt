@@ -22,6 +22,16 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -43,6 +53,7 @@ model User {
   departmentId String
 
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   @@map("users") // Dica: define o nome da tabela no banco como "users" (minúsculo)
 }
 
