@@ -45,6 +45,11 @@ export class Company {
     return Company.build({ ...props, parentId: parent.getId });
   }
 
+  /** Reidrata uma empresa a partir de dados já persistidos (ex.: uma linha do banco). */
+  static from(props: CompanyInput): Company {
+    return Company.build(props);
+  }
+
   private static build(props: CompanyInput): Company {
     if (!isValidName(props.name)) {
       throw new Error(
