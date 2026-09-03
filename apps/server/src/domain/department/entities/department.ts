@@ -41,6 +41,11 @@ export class Department {
     });
   }
 
+  /** Reidrata um departamento a partir de dados já persistidos (ex.: uma linha do banco). */
+  static from(props: DepartmentInput): Department {
+    return Department.build(props);
+  }
+
   private static build(props: DepartmentInput): Department {
     if (!isValidName(props.name)) {
       throw new Error(

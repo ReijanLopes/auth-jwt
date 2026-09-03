@@ -114,6 +114,14 @@ export class User {
     return this.media;
   }
 
+  get getCreatedAt() {
+    return this.createdAt;
+  }
+
+  get getUpdatedAt() {
+    return this.updatedAt;
+  }
+
   /** @internal — usar apenas em contexto de autenticação */
   get getPassword() {
     return this.password;

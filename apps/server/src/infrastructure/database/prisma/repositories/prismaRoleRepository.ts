@@ -45,4 +45,31 @@ export class PrismaRoleRepository implements RoleRepository {
       updatedAt: record.updatedAt,
     });
   }
+
+  async save(role: Role): Promise<Role> {
+    const record = await prisma.role.upsert({
+      where: { id: role.getId },
+      create: {
+        id:    role.getId,
+        name:  role.getName,
+        level: role.getLevel,
+      },
+      update: {
+        name:  role.getName,
+        level: role.getLevel,
+      },
+    });
+
+    return Role.from({
+      id:        record.id,
+      name:      record.name,
+      level:     record.level,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    });
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await prisma.role.delete({ where: { id } });
+  }
 }
